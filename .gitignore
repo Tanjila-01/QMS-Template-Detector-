@@ -1,0 +1,100 @@
+# Ignore Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environments
+# Common names: venv, env, .venv, .env
+venv/
+env/
+.venv/
+ENV/
+virtualenv/
+virtualenvs/
+
+# Pipenv / Poetry
+Pipfile.lock
+poetry.lock
+
+# Distribution / packaging
+.Python
+build/
+dist/
+downloads/
+*.egg-info/
+pip-wheel-metadata/
+.eggs/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Test, coverage, and caches
+.coverage
+.coverage.*
+.cache
+.hypothesis/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+nosetests.xml
+coverage.xml
+*.cover
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# tox
+.tox/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails and Windows
+Thumbs.db
+Icon
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*~
+
+# Streamlit local config
+.streamlit/
+
+# Local environment / credentials
+.env
+.env.*
+credentials.json
+
+# SQLite
+*.sqlite3
+
+# Python egg/build artifacts
+*.egg
+
+# Ignore node modules if present
+node_modules/
+
+# Ignore IDE-specific/run artifacts
+.ropeproject/
+.m2/
+
+# Keep project data (master_list.xlsx, sample_docs/) tracked intentionally
+# (Do not add patterns that would ignore these files.)
