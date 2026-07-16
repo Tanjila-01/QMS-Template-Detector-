@@ -9,7 +9,8 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 import os
 
-OUT_DIR = "/home/claude/template-detector/sample_docs"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+OUT_DIR = os.path.join(SCRIPT_DIR, "sample_docs")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 

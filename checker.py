@@ -15,11 +15,20 @@ VERDICT_FLAG = "FLAG"
 
 def load_master_list(path: str) -> pd.DataFrame:
     df = pd.read_excel(path, sheet_name="Master List")
+    
+    required_cols = {"Template_ID", "Template_Name", "Latest_Version", "Status", "Owner_Department"}
+    missing = required_cols - set(df.columns)
+    if missing:
+        raise ValueError(f"Excel master list is missing required columns: {', '.join(missing)}")
+        
     # Uppercase + strip Template_ID so lookups aren't broken by case differences
     # coming from OCR, manual typing, or inconsistent template stamping.
     df["Template_ID"] = df["Template_ID"].astype(str).str.strip().str.upper()
     df["Status"] = df["Status"].astype(str).str.strip().str.capitalize()
-    df["Superseded_By"] = df["Superseded_By"].fillna("").astype(str).str.strip().str.upper()
+    if "Superseded_By" in df.columns:
+        df["Superseded_By"] = df["Superseded_By"].fillna("").astype(str).str.strip().str.upper()
+    else:
+        df["Superseded_By"] = ""
     return df.set_index("Template_ID")
 
 

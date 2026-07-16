@@ -1,104 +1,115 @@
-# Outdated Template Detector
+# 🔍 Alcon QMS Outdated Template Detector
 
-Detects whether a Word/PDF document uses the latest approved QMS template — before it goes to review.
+An automated compliance dashboard that helps engineers automatically verify whether the Template ID and Version in their Word or PDF document footer matches the latest approved version in the Quality Management System (QMS) registry — before submitting for review.
 
-## How it works
+---
 
+## 🏗️ System Architecture
+
+```mermaid
+graph TD
+    A[Document .docx / .pdf] --> B[extractor.py]
+    B --> C{Contains Text Layer?}
+    C -->|Yes| D[Extract footer text natively]
+    C -->|No| E[Apply Tesseract OCR Fallback]
+    D --> F[Normalize text & extract via regex]
+    E --> F
+    F --> G[Extract Template ID & Version]
+    G --> H[checker.py]
+    I[master_list.xlsx / Custom Excel] --> H
+    H --> J{Lookup ID in Master Registry?}
+    J -->|Not Found| K[FLAG: Unregistered template]
+    J -->|Found| L{Compare Status & Version}
+    L -->|Status is Withdrawn/Superseded| M[FAIL: Outdated Template Status]
+    L -->|Status is Effective & Version is Latest| N[PASS: Approved Version]
+    L -->|Status is Effective & Version is Older| O[WARN: Outdated Version]
+    K --> P[Compliance Dashboard UI / CSV Audit Trail]
+    M --> P
+    N --> P
+    O --> P
 ```
-Document (.docx/.pdf)
-        │
-        ▼
-extractor.py  → reads footer → regex → (Template_ID, Version)
-        │           (OCR fallback only for scanned PDFs with no text layer)
-        ▼
-checker.py    → looks up Template_ID in master_list.xlsx
-        │
-        ▼
-   Verdict: PASS / WARN / FAIL / FLAG  + human-readable message
-```
 
-The pass/fail decision is **deterministic** (regex + table lookup) — no AI in the
-decision path. That matters in a regulated environment: a rule-based check is far
-easier to validate and audit than a probabilistic one. AI/OCR is only used as a
-fallback for scanned documents with no extractable text layer.
+---
 
-## Files
+## 📸 Dashboard Preview
 
-| File | Purpose |
+### 1. QMS Master Registry View
+The master registry tab lets compliance officers search, filter, and inspect registered QMS templates. It features a space-efficient, theme-adaptive horizontal status bar showing catalog metrics.
+
+![QMS Master Registry View](assets/metrics_bar_catalog.png)
+
+### 2. Batch Validation Compliance Report
+Engineers can drag-and-drop multiple documents at once to run package verification. The system displays a progress bar and outputs a color-coded horizontal results bar and an audit grid.
+
+![Batch Validation View](assets/metrics_bar_batch.png)
+
+---
+
+## 🛠️ Core Features
+
+1. **Deterministic Verdict Logic**: To comply with regulated medical device standards (like Alcon's), the pass/fail verification path is 100% deterministic (regex extraction paired with database lookup). AI is not in the decision loop, ensuring complete predictability and auditability.
+2. **Adaptive Light/Dark UI**: Custom CSS structures styled with Streamlit's native theme properties (`var(--text-color)`, `var(--border-color)`, `var(--background-color-secondary)`) ensure 100% legibility on both white and black browser themes.
+3. **Robust Extraction (Layout Tables & Variations)**: Parsers are built to handle footers structured inside layout grids, lettered revisions (e.g. `Rev C`), and spelling variants (`Revision:`, `Rev.`, `Version:`).
+4. **Resilient OCR Fallback**: If a document is a scanned image with no native text layer, the system falls back to Tesseract OCR to read the footer.
+5. **Interactive Catalog & Custom Databases**: Users can upload a custom master spreadsheet via the sidebar. If the schema is malformed, a fallback handler automatically restores the default QMS register.
+
+---
+
+## 🗂️ Project Structure
+
+| File / Folder | Purpose |
 |---|---|
-| `master_list.xlsx` | Mock master list of Template IDs, versions, and statuses (placeholder for the real QMS export) |
-| `extractor.py` | Pulls Template ID + Version from a docx/pdf footer |
-| `checker.py` | Looks up the extracted ID against the master list, returns a verdict |
-| `app.py` | Streamlit demo UI — upload a document, get an instant verdict |
-| `sample_docs/` | 4 sample documents, one per verdict type |
-| `tests/test_cases.py` | 14 test cases covering all verdict paths |
+| `app.py` | Premium Streamlit dashboard containing the Single Validator, Batch Checker, and Catalog search UI. |
+| `checker.py` | Contains database indexing and comparison rules (`PASS`, `WARN`, `FAIL`, `FLAG`). |
+| `extractor.py` | Handles native word (`python-docx`), native PDF (`pdfplumber`), and scanned PDF (`pytesseract`) extraction. |
+| `master_list.xlsx` | Default Excel QMS master registry. |
+| `sample_docs/` | Collection of test documents representing all validation verdicts. |
+| `tests/test_cases.py` | Automated test suite verifying 31 checks across edge cases, lookup logic, and integrity. |
+| `assets/` | Folder containing screenshots embedded in documentation. |
 
-## Run it
+---
 
+## 🚀 Setup & Execution
+
+### 1. Install Dependencies
+Ensure you have Python 3.8+ installed, then install the required libraries:
 ```bash
 pip install python-docx pdfplumber pandas openpyxl streamlit
-python3 tests/test_cases.py      # run the test suite
-streamlit run app.py             # launch the demo UI
 ```
 
-## Verdicts
+### 2. Run the Test Suite
+Before starting the server, run the automated validation suite to check logic integrity:
+```bash
+python tests/test_cases.py
+```
 
-| Verdict | Meaning |
-|---|---|
-| ✅ PASS | Template is Effective and on the latest version |
-| ⚠️ WARN | Template is Effective, but a newer version exists |
-| ❌ FAIL | Template is Superseded or Withdrawn |
-| ❓ FLAG | Template ID missing/unreadable, or not found in the master list |
+### 3. Launch the Dashboard
+Start the local Streamlit application:
+```bash
+streamlit run app.py
+```
+Open [http://localhost:8501](http://localhost:8501) in your browser.
 
-## Note on the master list
+---
 
-`master_list.xlsx` is realistic **mock data** — Alcon's actual internal QMS
-template register is proprietary and not accessible outside the company. The
-column structure (`Template_ID`, `Template_Name`, `Category`, `Latest_Version`,
-`Status`, `Effective_Date`, `Superseded_By`, `Owner_Department`) mirrors a real
-template register, and the file has been internally cross-checked (no duplicate
-IDs, every `Superseded_By` points to a valid Effective template). Swap in the
-real QMS export on presentation day — no code changes needed as long as the
-column headers match.
+## 📈 Verdict Rules Reference
 
-## Tested edge cases
+| Verdict | Color Pill | Meaning / Action Required |
+|:---:|:---:|---|
+| **PASS** | 🟢 Green | The template is active (`Effective`) and matches the latest registered version. Document is ready for submission. |
+| **WARN** | 🟡 Yellow | The template is active, but a newer version is registered in the QMS (e.g., footer is `v2.0` but registry indicates `v3.0`). Action: Update document template. |
+| **FAIL** | 🔴 Red | The template is deprecated (`Superseded` or `Withdrawn`). Action: Replace with the newer replacement template listed. |
+| **FLAG** | ⚪ Slate | The Template ID is missing, unreadable, or not present in the registry catalog. Action: Contact QA to register the template. |
 
-The suite in `tests/test_cases.py` has 31 passing checks across 4 sections —
-master list integrity, direct lookup logic, end-to-end file tests, and edge
-cases. The edge-case section specifically covers issues found (and fixed)
-while stress-testing this build:
+---
 
-- Lowercase / ALL CAPS Template IDs and version labels
-- Non-numeric version strings (e.g. a letter-based "Rev C" scheme) — flags
-  for manual review instead of crashing
-- Corrupt, empty, missing, or unsupported files — graceful error, not a crash
-- A document with no footer stamped at all
-- Footer content laid out in a table instead of plain text (common in real
-  controlled templates)
-- "Revision:" and "Rev." wording, not just "Version:"
-- A genuinely scanned PDF with no text layer at all — real OCR fallback via
-  Tesseract, verified end-to-end, not just a code path that's never exercised
-- Both `.docx` and `.pdf` produce identical verdicts for the same content
-- A malformed master list entry (non-numeric version) doesn't crash the checker
+## 🔮 Risks, Scale-Up & Production Readiness
 
-**Known limitations, worth confirming with QA before rollout:**
-- Version numbers are compared as decimals (`3.0` < `3.12`). If Alcon's real
-  versioning scheme uses `Major.Minor` where Minor is a sequential integer
-  rather than a decimal fraction (e.g. `3.9` should be considered *older*
-  than `3.10`, not newer), this comparison would need to change to split on
-  the dot and compare each part as an integer.
-- If a footer happens to contain more than one Template ID (e.g. referencing
-  both an old and new ID for context), only the first match found is used.
-- OCR accuracy on real scanned documents depends on scan quality — a fuzzy
-  matcher (e.g. `rapidfuzz`) is recommended as a production hardening step to
-  catch near-misses like a `0` OCR'd as `O`.
+### 1. Scaling to 1,000+ Documents/Day
+- **Microservices Architecture**: Wrap the extraction and validation logic in a serverless REST API (e.g., FastAPI hosted on AWS Lambda or Azure Functions).
+- **Asynchronous Processing**: Process incoming files via a background worker queue (e.g. Celery + Redis / RabbitMQ) to handle concurrent traffic spikes gracefully.
+- **Repository Hooks**: Integrate directly as a git pre-commit hook or automated QA pipeline gate inside the document management system (e.g. Veeva Vault) to scan files automatically.
 
-## Scaling to 1,000 docs/day
-
-- Replace the single-script flow with a queue-based service: a watched
-  SharePoint/QMS folder → message queue (Celery/RabbitMQ or Azure Functions) →
-  worker pool runs extract+check → results written to a database.
-- Cache the master list in memory/Redis, refreshed on a schedule instead of
-  reading the Excel file per document.
-- Track extraction-failure and "ID not found" rates as leading indicators that
-  the regex or master list needs attention.
+### 2. Risks & Mitigations
+- **OCR Accuracy**: Low-resolution scans can misread template IDs (e.g. translating `0` to `O`). *Mitigation*: Integrate a fuzzy matching library (like `rapidfuzz`) to catch near-matches and suggest corrections.
+- **Database Availability**: A down database blocks document verification. *Mitigation*: Implement local caching of the QMS master list in Redis, refreshed on a daily schedule, to guarantee sub-millisecond offline lookup resilience.

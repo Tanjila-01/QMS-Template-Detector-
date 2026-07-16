@@ -134,5 +134,8 @@ for row in legend.iter_rows(min_row=2, max_row=legend.max_row):
         cell.font = legend_font
 legend.column_dimensions["A"].width = 90
 
-wb.save("/home/claude/template-detector/master_list.xlsx")
+import os
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+wb.save(os.path.join(SCRIPT_DIR, "master_list.xlsx"))
 print("master_list.xlsx written.")
+
